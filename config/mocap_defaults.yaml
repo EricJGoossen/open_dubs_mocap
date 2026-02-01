@@ -1,0 +1,32 @@
+/**:
+  ros__parameters:
+
+    # Use fake mocap if true, else use VRPN
+    use_fake_mocap: true
+
+    # Mocap relay parameters
+    asset_name: open_dubs
+    car_name: car
+    mocap_topic: mocap
+    tracked_objects: [
+      ramp1,
+      ramp2,
+      block1,
+      block2,
+      block3,
+    ]
+
+    # VRPN parameters
+    server: 192.168.0.241
+    port: 3883
+    update_frequency: 360.0
+    frame_id: map
+    use_server_time: false
+    broadcast_tf: true
+
+    # Topic remappings
+    pose_topic: local_position/pose
+    odom_topic: local_position/odom
+
+    # Odometry parameters
+    filter_alpha: 0.2
