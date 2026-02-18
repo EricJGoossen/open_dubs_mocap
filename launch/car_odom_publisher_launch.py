@@ -24,17 +24,34 @@ def generate_launch_description():
 
     # Extract ROS parameters
     ros_params = config_data.get('/**', {}).get('ros__parameters', {})
-    mocap_namespace = ros_params.get('mocap_topic', 'mocap')
-    pose_topic = ros_params.get('pose_topic', 'local_position/pose')
-    odom_topic = ros_params.get('odom_topic', 'local_position/odom')
+    asset_name = ros_params.get('asset_name', 'mocap_camera')
     
-    # Declare use_fake_mocap launch argument
-    use_fake_arg = DeclareLaunchArgument(
+    # Declare launch arguments
+    use_fake_mocap_arg = DeclareLaunchArgument(
         'use_fake_mocap',
         default_value='false',
         description='Use fake mocap instead of VRPN'
     )
+    namespace_arg = DeclareLaunchArgument(
+        'namespace',
+        default_value='mocap',
+        description='ROS namespace for mocap topics'
+    )
+    pose_topic_arg = DeclareLaunchArgument(
+        'pose_topic',
+        default_value='localization/pose',
+        description='ROS topic for car pose output'
+    )
+    odom_topic_arg = DeclareLaunchArgument(
+        'odom_topic',
+        default_value='localization/odom',
+        description='ROS topic for car odometry output'
+    )
+
     use_fake = LaunchConfiguration('use_fake_mocap')
+    namespace = LaunchConfiguration('namespace')
+    pose_topic = LaunchConfiguration('pose_topic')
+    odom_topic = LaunchConfiguration('odom_topic')
 
     # VRPN client node
     vrpn_node = Node(
@@ -53,6 +70,12 @@ def generate_launch_description():
         name='fake_mocap',
         output='screen',
         parameters=[config_file],
+        remappings=[
+            ('car_pose', f'/vrpn_client_node/{asset_name}/pose'),
+            ('ramp1_pose', '/vrpn_client_node/ramp1/pose'),
+            ('ramp2_pose', '/vrpn_client_node/ramp2/pose'),
+            ('block1_pose', '/vrpn_client_node/block1/pose'),
+        ],
         condition=IfCondition(use_fake)
     )
 
@@ -61,8 +84,13 @@ def generate_launch_description():
         package='open_dubs_mocap',
         executable='relay_mocap',
         name='relay',
+        namespace=namespace,
         output='screen',
         parameters=[config_file],
+        remappings=[
+            ('input_pose', f'/vrpn_client_node/{asset_name}/pose'),
+            ('output_pose', 'mocap_pose'),
+        ],
     )
 
     # Car odometry publisher node
@@ -70,10 +98,11 @@ def generate_launch_description():
         package='open_dubs_mocap',
         executable='car_odom_publisher',
         name='odom_publisher',
-        namespace=mocap_namespace,
+        namespace=namespace,
         output='screen',
         parameters=[config_file],
         remappings=[
+            ('mocap_pose', 'mocap_pose'),
             ('car_pose', pose_topic),
             ('car_odom', odom_topic)
         ]
@@ -81,7 +110,10 @@ def generate_launch_description():
     
 
     return LaunchDescription([
-        use_fake_arg,
+        use_fake_mocap_arg,
+        namespace_arg,
+        pose_topic_arg,
+        odom_topic_arg,
         vrpn_node,
         fake_mocap_node,
         mocap_relay_node,

@@ -16,12 +16,6 @@ import os
 class RelayMocapNode(Node): 
     def __init__(self): 
         super().__init__("pose_publisher") 
-
-        self.declare_parameter('car_name', 'open_dubs')
-        car_name = self.get_parameter('car_name').get_parameter_value().string_value 
-
-        self.declare_parameter('asset_name', 'mocap')
-        asset_name = self.get_parameter('asset_name').get_parameter_value().string_value 
         
         pkg_share = get_package_share_directory('open_dubs_mocap')
         config_path = os.path.join(pkg_share, 'config', 'mocap_tf_offset.yaml')
@@ -39,13 +33,13 @@ class RelayMocapNode(Node):
             
             self.publisher = self.create_publisher( 
                 PoseStamped, 
-                f'{car_name}/mocap_pose', 
+                'output_pose', 
                 qos_profile=1 
             ) 
             
             self.subscriber = self.create_subscription( 
                 PoseStamped, 
-                f'/vrpn_client_node/{asset_name}/pose', 
+                'input_pose', 
                 self.publish_car_pose, 
                 qos_profile=1 
             ) 

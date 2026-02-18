@@ -144,12 +144,12 @@ def main(args=None):
     rclpy.init()
     node = OdomPublisher()
 
-    try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        node.destroy_node()
+    try: 
+        rclpy.spin(node) 
+    except KeyboardInterrupt: 
+        pass 
+    finally: 
+        node.destroy_node() 
         try:
             rclpy.shutdown()
         except:

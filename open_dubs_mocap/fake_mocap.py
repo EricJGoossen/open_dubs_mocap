@@ -9,10 +9,10 @@ class FakeMocapPublisher(Node):
         super().__init__('fake_mocap')
 
         # Publishers for car and some blocks/ramps
-        self.pub_car = self.create_publisher(PoseStamped, '/vrpn_client_node/open_dubs/pose', 10)
-        self.pub_ramp1 = self.create_publisher(PoseStamped, '/vrpn_client_node/ramp1/pose', 10)
-        self.pub_ramp2 = self.create_publisher(PoseStamped, '/vrpn_client_node/ramp2/pose', 10)
-        self.pub_block1 = self.create_publisher(PoseStamped, '/vrpn_client_node/block1/pose', 10)
+        self.pub_car = self.create_publisher(PoseStamped, 'car_pose', 10)
+        self.pub_ramp1 = self.create_publisher(PoseStamped, 'ramp1_pose', 10)
+        self.pub_ramp2 = self.create_publisher(PoseStamped, 'ramp2_pose', 10)
+        self.pub_block1 = self.create_publisher(PoseStamped, 'block1_pose', 10)
 
         self.timer = self.create_timer(0.02, self.timer_callback)  # 50 Hz
         self.t = 0.0

@@ -18,8 +18,8 @@ setup(
         ]),
         ('share/' + package_name + '/config', [
             'config/mocap_tf_offset.yaml',
+            'config/mocap_defaults.yaml'
         ]),
-        ('share/' + package_name + '/config', ['config/mocap_defaults.yaml']),
     ],
     install_requires=[
         'setuptools',

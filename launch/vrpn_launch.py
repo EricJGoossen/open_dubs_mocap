@@ -23,9 +23,6 @@ def generate_launch_description():
 
     # Extract ROS parameters
     ros_params = config_data.get('/**', {}).get('ros__parameters', {})
-    mocap_namespace = ros_params.get('mocap_topic', 'mocap')
-    pose_topic = ros_params.get('pose_topic', 'local_position/pose')
-    odom_topic = ros_params.get('odom_topic', 'local_position/odom')
     car_name = ros_params.get('car_name', None)
 
     tracked_objects = ros_params.get('tracked_objects', [])
@@ -37,11 +34,6 @@ def generate_launch_description():
         trackers = ([] if car_name is None else [car_name]) + tracked_objects
 
     # Declare use_fake_mocap launch argumen
-    use_fake_arg = DeclareLaunchArgument(
-        'use_fake_mocap',
-        default_value='false',
-        description='Use fake mocap instead of VRPN'
-    )
     use_fake = LaunchConfiguration('use_fake_mocap')
 
     # VRPN client node
