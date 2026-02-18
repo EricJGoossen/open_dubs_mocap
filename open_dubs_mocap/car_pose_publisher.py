@@ -8,7 +8,6 @@ from rclpy.node import Node
 from geometry_msgs.msg import PoseStamped
 from tf_transformations import *
 import numpy as np
-import sys
 
 class PosePublisher(Node):
     def __init__(self):
@@ -22,13 +21,13 @@ class PosePublisher(Node):
 
         self.publisher = self.create_publisher(
             PoseStamped, 
-            pub_topic, 
+            "output_pose", 
             qos_profile=1
         )
 
         self.subscriber = self.create_subscription(
             PoseStamped,
-            f'/vrpn_client_node/{car_name}/pose',
+            'input_pose',
             self.publish_car_pose,
             qos_profile=1
         )
@@ -77,14 +76,13 @@ def main(args=None):
     rclpy.init()
     node = PosePublisher()
 
-    try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        if rclpy.ok():
-            node.destroy_node()
-            try:
-                rclpy.shutdown()
-            except rclpy._rclpy_pybind11.RCLError:
-                pass
+    try: 
+        rclpy.spin(node) 
+    except KeyboardInterrupt: 
+        pass 
+    finally: 
+        node.destroy_node() 
+        try:
+            rclpy.shutdown()
+        except:
+            pass

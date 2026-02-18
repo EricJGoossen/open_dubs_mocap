@@ -23,18 +23,31 @@ def generate_launch_description():
 
     # Extract ROS parameters
     ros_params = config_data.get('/**', {}).get('ros__parameters', {})
-    car_name = ros_params.get('car_name', None)
+    asset_name = ros_params.get('car_name', None)
 
     tracked_objects = ros_params.get('tracked_objects', [])
     if not isinstance(tracked_objects, list):
         tracked_objects = []
 
     trackers = ros_params.get('trackers', [])
-    if car_name or tracked_objects:
-        trackers = ([] if car_name is None else [car_name]) + tracked_objects
+    if asset_name or tracked_objects:
+        trackers = ([] if asset_name is None else [asset_name]) + tracked_objects
 
     # Declare use_fake_mocap launch argumen
+    # Declare launch arguments
+    use_fake_mocap_arg = DeclareLaunchArgument(
+        'use_fake_mocap',
+        default_value='false',
+        description='Use fake mocap instead of VRPN'
+    )
+    namespace_arg = DeclareLaunchArgument(
+        'namespace',
+        default_value='mocap',
+        description='ROS namespace for mocap topics'
+    )
+
     use_fake = LaunchConfiguration('use_fake_mocap')
+    namespace = LaunchConfiguration('namespace')
 
     # VRPN client node
     vrpn_node = Node(
@@ -55,21 +68,32 @@ def generate_launch_description():
         executable='fake_mocap',
         name='fake_mocap',
         output='screen',
-        parameters=[config_file],
+        remappings=[
+            ('car_pose', f'/vrpn_client_node/{asset_name}/pose'),
+            ('ramp1_pose', '/vrpn_client_node/ramp1/pose'),
+            ('ramp2_pose', '/vrpn_client_node/ramp2/pose'),
+            ('block1_pose', '/vrpn_client_node/block1/pose'),
+        ],
         condition=IfCondition(use_fake)
     )
 
-    # Topic relay node
-    pose_relay_node = Node(
+    # Mocap relay node
+    mocap_relay_node = Node(
         package='open_dubs_mocap',
         executable='relay_mocap',
         name='relay',
+        namespace=namespace,
         output='screen',
-        parameters=[config_file]
+        remappings=[
+            ('input_pose', f'/vrpn_client_node/{asset_name}/pose'),
+            ('output_pose', 'mocap_pose'),
+        ],
     )
 
     return LaunchDescription([
+        use_fake_mocap_arg,
+        namespace_arg,
         vrpn_node,
         fake_mocap_node,
-        pose_relay_node
+        mocap_relay_node
     ])

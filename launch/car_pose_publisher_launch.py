@@ -23,19 +23,81 @@ def generate_launch_description():
 
     # Extract ROS parameters
     ros_params = config_data.get('/**', {}).get('ros__parameters', {})
-    car_namespace = ros_params.get('car_name', 'car')
+    asset_name = ros_params.get('asset_name', 'mocap_camera')
+    
+    # Declare launch arguments
+    use_fake_mocap_arg = DeclareLaunchArgument(
+        'use_fake_mocap',
+        default_value='false',
+        description='Use fake mocap instead of VRPN'
+    )
+    namespace_arg = DeclareLaunchArgument(
+        'namespace',
+        default_value='mocap',
+        description='ROS namespace for mocap topics'
+    )
+    pose_topic_arg = DeclareLaunchArgument(
+        'pose_topic',
+        default_value='localization/pose',
+        description='ROS topic for car pose output'
+    )
+    odom_topic_arg = DeclareLaunchArgument(
+        'odom_topic',
+        default_value='localization/odom',
+        description='ROS topic for car odometry output'
+    )
 
-    # Pose publisher node
+    use_fake = LaunchConfiguration('use_fake_mocap')
+    namespace = LaunchConfiguration('namespace')
+    pose_topic = LaunchConfiguration('pose_topic')
+
+    # VRPN client node
+    vrpn_node = Node(
+        package='vrpn_client_ros',
+        executable='vrpn_client_node',
+        name='vrpn_client_node',
+        output='screen',
+        parameters=[config_file],
+        condition=IfCondition(PythonExpression(["'", use_fake, "' == 'false'"]))
+    )
+
+    # Fake mocap node
+    fake_mocap_node = Node(
+        package='open_dubs_mocap',
+        executable='fake_mocap',
+        name='fake_mocap',
+        output='screen',
+        remappings=[
+            ('car_pose', f'/vrpn_client_node/{asset_name}/pose'),
+            ('ramp1_pose', '/vrpn_client_node/ramp1/pose'),
+            ('ramp2_pose', '/vrpn_client_node/ramp2/pose'),
+            ('block1_pose', '/vrpn_client_node/block1/pose'),
+        ],
+        condition=IfCondition(use_fake)
+    )
+
+    # Car odometry publisher node
     pose_publisher_node = Node(
         package='open_dubs_mocap',
         executable='car_pose_publisher',
-        name='mocap_publisher',
-        namespace=car_namespace,
+        name='pose_publisher',
+        namespace=namespace,
         output='screen',
         parameters=[config_file],
+        remappings=[
+            ('input_pose', f'/vrpn_client_node/{asset_name}/pose'),
+            ('output_pose', pose_topic),
+        ]
     )
+    
 
-    # Return LaunchDescription
     return LaunchDescription([
+        use_fake_mocap_arg,
+        namespace_arg,
+        pose_topic_arg,
+        odom_topic_arg,
+        vrpn_node,
+        fake_mocap_node,
         pose_publisher_node
     ])
+

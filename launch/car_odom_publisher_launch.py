@@ -69,7 +69,6 @@ def generate_launch_description():
         executable='fake_mocap',
         name='fake_mocap',
         output='screen',
-        parameters=[config_file],
         remappings=[
             ('car_pose', f'/vrpn_client_node/{asset_name}/pose'),
             ('ramp1_pose', '/vrpn_client_node/ramp1/pose'),
@@ -86,7 +85,6 @@ def generate_launch_description():
         name='relay',
         namespace=namespace,
         output='screen',
-        parameters=[config_file],
         remappings=[
             ('input_pose', f'/vrpn_client_node/{asset_name}/pose'),
             ('output_pose', 'mocap_pose'),
