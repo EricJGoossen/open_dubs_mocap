@@ -33,7 +33,7 @@ class OdomPublisher(Node):
         
         self.subscriber = self.create_subscription(
             PoseStamped, 
-            "mocap_pose", 
+            "mocap_output_pose", 
             self.pose_callback, 
             qos_profile=1
         )

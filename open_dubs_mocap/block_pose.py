@@ -12,56 +12,63 @@ import os
 class PoseOffsetNode(Node): 
     def __init__(self): 
         super().__init__('pose_offset_node') 
+
+        DEG2RAD = np.pi / 180.0 
         
-        # Load parameters 
+        # Declare parameters
         self.declare_parameter('tracked_objects', 
                               ['car', 'ramp1', 'ramp2', 
                                'block1', 'block2', 'block3', 'block4'])
-        tracked_objects = self.get_parameter('tracked_objects').get_parameter_value().string_array_value 
         
-        pkg_share = get_package_share_directory('open_dubs_mocap')
-        config_path = os.path.join(pkg_share, 'config', 'mocap_tf_offset.yaml')
-        with open(config_path) as f: 
-            config = yaml.safe_load(f) 
-            DEG2RAD = np.pi / 180.0 
-            
-            self.offset_x = config["x"] 
-            self.offset_y = config["y"] 
-            self.offset_z = config["z"] 
+        self.declare_parameter('offset_x', 0.0)
+        self.declare_parameter('offset_y', 0.0)
+        self.declare_parameter('offset_z', 0.0)
 
-            self.offset_roll = config["roll"] * DEG2RAD 
-            self.offset_pitch = config["pitch"] * DEG2RAD 
-            self.offset_yaw = config["yaw"] * DEG2RAD 
+        self.declare_parameter('offset_roll', 0.0)
+        self.declare_parameter('offset_pitch', 0.0)
+        self.declare_parameter('offset_yaw', 0.0)
+
+        # Get parameters
+        tracked_objects = self.get_parameter('tracked_objects').get_parameter_value().string_array_value 
+
+        self.offset_x = self.get_parameter('offset_x').get_parameter_value().double_value 
+        self.offset_y = self.get_parameter('offset_y').get_parameter_value().double_value 
+        self.offset_z = self.get_parameter('offset_z').get_parameter_value().double_value 
+        
+        self.offset_roll = self.get_parameter('offset_roll').get_parameter_value().double_value * DEG2RAD 
+        self.offset_pitch = self.get_parameter('offset_pitch').get_parameter_value().double_value * DEG2RAD 
+        self.offset_yaw = self.get_parameter('offset_yaw').get_parameter_value().double_value * DEG2RAD 
             
-            self.active_publishers = {} 
-            self.active_subscribers = {} 
+        # Initialize publishers and subscribers dictionaries
+        self.active_publishers = {} 
+        self.active_subscribers = {} 
+        
+        # Create subscribers and publishers for each object 
+        for obj in tracked_objects: 
+            # Determine input topic based on whether it's the car 
+            input_topic = f"vrpn_client_node/{obj}/pose" 
+            output_topic = f"{obj}/pose" 
             
-            # Create subscribers and publishers for each object 
-            for obj in tracked_objects: 
-                # Determine input topic based on whether it's the car 
-                input_topic = f"/vrpn_client_node/{obj}/pose" 
-                output_topic = f"/mocap/{obj}/pose" 
-                
-                # Create publisher 
-                self.active_publishers[obj] = self.create_publisher( 
-                    PoseStamped, 
-                    output_topic, 
-                    qos_profile=10
-                ) 
-                
-                # Create subscriber with callback 
-                self.active_subscribers[obj] = self.create_subscription(
-                    PoseStamped, 
-                    input_topic, 
-                    partial(self.pose_callback, obj), 
-                    qos_profile=10
-                ) 
-            
-            self.get_logger().info( 
-                f"Pose offset node started\n" 
-                f"Position offsets: [{self.offset_x}, {self.offset_y}, {self.offset_z}]\n" 
-                f"Orientation offsets: [{self.offset_roll}, {self.offset_pitch}, {self.offset_yaw}]" 
+            # Create publisher 
+            self.active_publishers[obj] = self.create_publisher( 
+                PoseStamped, 
+                output_topic, 
+                qos_profile=10
             ) 
+            
+            # Create subscriber with callback 
+            self.active_subscribers[obj] = self.create_subscription(
+                PoseStamped, 
+                input_topic, 
+                partial(self.pose_callback, obj), 
+                qos_profile=10
+            ) 
+        
+        self.get_logger().info( 
+            f"Pose offset node started\n" 
+            f"Position offsets: [{self.offset_x}, {self.offset_y}, {self.offset_z}]\n" 
+            f"Orientation offsets: [{self.offset_roll}, {self.offset_pitch}, {self.offset_yaw}]" 
+        ) 
             
     def pose_callback(self, obj_name, msg): 
         """Process incoming pose message and apply offsets""" 

@@ -17,7 +17,6 @@ setup(
             'launch/vrpn_launch.py',
         ]),
         ('share/' + package_name + '/config', [
-            'config/mocap_tf_offset.yaml',
             'config/mocap_defaults.yaml'
         ]),
     ],

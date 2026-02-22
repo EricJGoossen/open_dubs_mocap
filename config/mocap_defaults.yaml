@@ -1,7 +1,7 @@
 /**:
   ros__parameters:
     # Mocap relay parameters
-    asset_name: mocap_camera
+    asset_name: open_dubs
     tracked_objects: [
       ramp1,
       ramp2,
@@ -20,3 +20,11 @@
 
     # Odometry parameters
     filter_alpha: 0.2
+
+    # TF offsets
+    offset_x: -1.900
+    offset_y: -2.263
+    offset_z: -0.170 
+    offset_roll: 0.0 
+    offset_pitch: 0.0
+    offset_yaw: 0.0

@@ -1,120 +1,106 @@
-#!/usr/bin/env python3
-
-import os
-import yaml
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration, PythonExpression
-from launch.conditions import IfCondition
+from launch.conditions import IfCondition, UnlessCondition
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
-from ament_index_python.packages import get_package_share_directory
-
+from launch_ros.substitutions import FindPackageShare
 
 def generate_launch_description():
-    pkg_share = get_package_share_directory('open_dubs_mocap')
-    config_file = os.path.join(pkg_share, 'config', 'mocap_defaults.yaml')
-
-    # Load configuration parameters from YAML file
-    config_data = {}
-    try:
-        with open(config_file, 'r', encoding='utf-8') as config_stream:
-            config_data = yaml.safe_load(config_stream) or {}
-    except FileNotFoundError:
-        config_data = {}
-
-    # Extract ROS parameters
-    ros_params = config_data.get('/**', {}).get('ros__parameters', {})
-    asset_name = ros_params.get('asset_name', 'mocap_camera')
-    
-    # Declare launch arguments
-    use_fake_mocap_arg = DeclareLaunchArgument(
-        'use_fake_mocap',
-        default_value='false',
-        description='Use fake mocap instead of VRPN'
-    )
-    namespace_arg = DeclareLaunchArgument(
-        'namespace',
-        default_value='mocap',
-        description='ROS namespace for mocap topics'
-    )
-    pose_topic_arg = DeclareLaunchArgument(
-        'pose_topic',
-        default_value='localization/pose',
-        description='ROS topic for car pose output'
-    )
-    odom_topic_arg = DeclareLaunchArgument(
-        'odom_topic',
-        default_value='localization/odom',
-        description='ROS topic for car odometry output'
-    )
-
-    use_fake = LaunchConfiguration('use_fake_mocap')
-    namespace = LaunchConfiguration('namespace')
-    pose_topic = LaunchConfiguration('pose_topic')
-    odom_topic = LaunchConfiguration('odom_topic')
-
-    # VRPN client node
-    vrpn_node = Node(
-        package='vrpn_client_ros',
-        executable='vrpn_client_node',
-        name='vrpn_client_node',
-        output='screen',
-        parameters=[config_file],
-        condition=IfCondition(PythonExpression(["'", use_fake, "' == 'false'"]))
-    )
-
-    # Fake mocap node
-    fake_mocap_node = Node(
-        package='open_dubs_mocap',
-        executable='fake_mocap',
-        name='fake_mocap',
-        output='screen',
-        remappings=[
-            ('car_pose', f'/vrpn_client_node/{asset_name}/pose'),
-            ('ramp1_pose', '/vrpn_client_node/ramp1/pose'),
-            ('ramp2_pose', '/vrpn_client_node/ramp2/pose'),
-            ('block1_pose', '/vrpn_client_node/block1/pose'),
-        ],
-        condition=IfCondition(use_fake)
-    )
-
-    # Mocap relay node
-    mocap_relay_node = Node(
-        package='open_dubs_mocap',
-        executable='relay_mocap',
-        name='relay',
-        namespace=namespace,
-        output='screen',
-        remappings=[
-            ('input_pose', f'/vrpn_client_node/{asset_name}/pose'),
-            ('output_pose', 'mocap_pose'),
-        ],
-    )
-
-    # Car odometry publisher node
-    odom_publisher_node = Node(
-        package='open_dubs_mocap',
-        executable='car_odom_publisher',
-        name='odom_publisher',
-        namespace=namespace,
-        output='screen',
-        parameters=[config_file],
-        remappings=[
-            ('mocap_pose', 'mocap_pose'),
-            ('car_pose', pose_topic),
-            ('car_odom', odom_topic)
-        ]
-    )
-    
-
-    return LaunchDescription([
-        use_fake_mocap_arg,
-        namespace_arg,
-        pose_topic_arg,
-        odom_topic_arg,
-        vrpn_node,
-        fake_mocap_node,
-        mocap_relay_node,
-        odom_publisher_node
+    default_config_file = PathJoinSubstitution([
+        FindPackageShare("open_dubs_mocap"), "config", "mocap_defaults.yaml"
     ])
+
+    # Declare launch arguments
+    launch_arguments = [
+        DeclareLaunchArgument(
+            "config_file", 
+            default_value=default_config_file,
+            description="Path to YAML config file for mocap nodes"
+        ),
+        DeclareLaunchArgument(
+            'use_fake_mocap',
+            default_value='false',
+            description='Use fake mocap instead of VRPN'
+        ),
+        DeclareLaunchArgument(
+            'namespace',
+            default_value='mocap',
+            description='ROS namespace for mocap topics'
+        ),
+        DeclareLaunchArgument(
+            'asset_name',
+            default_value='open_dubs',
+            description='Name of the asset being tracked by the mocap'
+        ),
+        DeclareLaunchArgument(
+            'pose_topic',
+            default_value='pose',
+            description='ROS topic for car pose output'
+        ),
+        DeclareLaunchArgument(
+            'odom_topic',
+            default_value='odom',
+            description='ROS topic for car odometry output'
+        )
+    ]
+
+    config_file = LaunchConfiguration('config_file')
+    namespace = LaunchConfiguration('namespace')
+    asset_name = LaunchConfiguration('asset_name')
+    vrpn_name = 'vrpn_client_node'
+
+    nodes = [
+        Node( # VRPN client node
+            package='vrpn_client_ros',
+            executable='vrpn_client_node',
+            name=vrpn_name,
+            namespace=namespace,
+            output='screen',
+            parameters=[
+                config_file,
+                {'asset_name': asset_name}
+            ],
+            condition=UnlessCondition(LaunchConfiguration("use_fake_mocap")),
+        ),
+        Node( # Fake mocap node
+            package='open_dubs_mocap',
+            executable='fake_mocap',
+            name='fake_mocap',
+            namespace=namespace,
+            output='screen',
+            remappings=[
+                ('car_pose', [vrpn_name, '/', asset_name, '/pose']),
+                ('ramp1_pose', vrpn_name + '/ramp1/pose'),
+                ('ramp2_pose', vrpn_name + '/ramp2/pose'),
+                ('block1_pose', vrpn_name + '/block1/pose'),
+            ],
+            condition=IfCondition(LaunchConfiguration('use_fake_mocap'))
+        ),
+        Node( # Mocap relay node
+            package='open_dubs_mocap',
+            executable='relay_mocap',
+            name='relay',
+            namespace=namespace,
+            output='screen',
+            remappings=[
+                ('input_pose', [vrpn_name + '/', asset_name, '/pose']),
+                ('output_pose', 'vrpn_output_pose'),
+            ],
+        ),
+        Node( # Car odometry publisher node
+            package='open_dubs_mocap',
+            executable='car_odom_publisher',
+            name='odom_publisher',
+            namespace=namespace,
+            output='screen',
+            parameters=[config_file],
+            remappings=[
+                ('mocap_output_pose', 'vrpn_output_pose'),
+                ('car_pose', [asset_name, '/', LaunchConfiguration('pose_topic')]),
+                ('car_odom', [asset_name, '/', LaunchConfiguration('odom_topic')])
+            ]
+        )
+    ]
+
+    return LaunchDescription(launch_arguments + nodes)
 
