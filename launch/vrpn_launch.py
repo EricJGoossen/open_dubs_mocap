@@ -40,17 +40,16 @@ def generate_launch_description():
     vrpn_name = 'vrpn_client_node'
 
     nodes = [
-        Node( # VRPN client node
-            package='vrpn_client_ros',
-            executable='vrpn_client_node',
-            name=vrpn_name,
-            namespace=namespace,
-            output='screen',
-            parameters=[
-                config_file,
-                {'asset_name': asset_name}
-                ],
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource([
+                PathJoinSubstitution([
+                    FindPackageShare('vrpn_mocap'), 'launch', 'client.launch.yaml'
+                ])
+            ]),
             condition=UnlessCondition(LaunchConfiguration("use_fake_mocap")),
+            launch_arguments={
+                'config_file': config_file
+            }.items()
         ),
         Node( # Fake mocap node
             package='open_dubs_mocap',

@@ -11,7 +11,7 @@
     ]
 
     # VRPN parameters
-    server: 192.168.0.241
+    server: 192.168.0.184
     port: 3883
     update_frequency: 360.0
     frame_id: map
