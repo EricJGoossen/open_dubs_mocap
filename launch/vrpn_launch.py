@@ -14,18 +14,18 @@ def generate_launch_description():
     # Declare launch arguments
     launch_arguments = [
         DeclareLaunchArgument(
-            "config_file", 
+            "config_file",
             default_value=default_config_file,
             description="Path to YAML config file for mocap nodes"
         ),
         DeclareLaunchArgument(
-            'server', 
-            default_value='192.168.0.184', 
+            'server',
+            default_value='192.168.0.184',
             description='VRPN server IP'
-            ),
+        ),
         DeclareLaunchArgument(
-            'port',   
-            default_value='3883',          
+            'port',
+            default_value='3883',
             description='VRPN server port'
         ),
         DeclareLaunchArgument(
@@ -42,7 +42,7 @@ def generate_launch_description():
             'asset_name',
             default_value='open_dubs',
             description='Name of the asset being tracked by the mocap'
-        )
+        ),
     ]
 
     config_file = LaunchConfiguration('config_file')
@@ -65,7 +65,7 @@ def generate_launch_description():
                 'port': port,
             }.items()
         ),
-        Node( # Fake mocap node
+        Node(  # Fake mocap node
             package='open_dubs_mocap',
             executable='fake_mocap',
             name='fake_mocap',
@@ -79,12 +79,13 @@ def generate_launch_description():
             ],
             condition=IfCondition(LaunchConfiguration('use_fake_mocap'))
         ),
-        Node( # Mocap relay node
+        Node(  # Mocap relay node
             package='open_dubs_mocap',
             executable='relay_mocap',
             name='relay',
             namespace=namespace,
             output='screen',
+            parameters=[config_file],
             remappings=[
                 ('input_pose', [vrpn_name + '/', asset_name, '/pose']),
                 ('output_pose', 'vrpn_output_pose'),
