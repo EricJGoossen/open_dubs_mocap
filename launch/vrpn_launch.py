@@ -1,7 +1,8 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.conditions import IfCondition, UnlessCondition
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.launch_description_sources import AnyLaunchDescriptionSource
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
@@ -16,6 +17,16 @@ def generate_launch_description():
             "config_file", 
             default_value=default_config_file,
             description="Path to YAML config file for mocap nodes"
+        ),
+        DeclareLaunchArgument(
+            'server', 
+            default_value='192.168.0.184', 
+            description='VRPN server IP'
+            ),
+        DeclareLaunchArgument(
+            'port',   
+            default_value='3883',          
+            description='VRPN server port'
         ),
         DeclareLaunchArgument(
             'use_fake_mocap',
@@ -35,20 +46,23 @@ def generate_launch_description():
     ]
 
     config_file = LaunchConfiguration('config_file')
+    server = LaunchConfiguration('server')
+    port = LaunchConfiguration('port')
     namespace = LaunchConfiguration('namespace')
     asset_name = LaunchConfiguration('asset_name')
     vrpn_name = 'vrpn_client_node'
 
     nodes = [
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([
+            AnyLaunchDescriptionSource([
                 PathJoinSubstitution([
                     FindPackageShare('vrpn_mocap'), 'launch', 'client.launch.yaml'
                 ])
             ]),
             condition=UnlessCondition(LaunchConfiguration("use_fake_mocap")),
             launch_arguments={
-                'config_file': config_file
+                'server': server,
+                'port': port,
             }.items()
         ),
         Node( # Fake mocap node
