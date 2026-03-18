@@ -40,7 +40,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'asset_name',
-            default_value='open_dubs',
+            default_value='opendubs',
             description='Name of the asset being tracked by the mocap'
         ),
     ]
@@ -50,7 +50,7 @@ def generate_launch_description():
     port = LaunchConfiguration('port')
     namespace = LaunchConfiguration('namespace')
     asset_name = LaunchConfiguration('asset_name')
-    vrpn_name = 'vrpn_client_node'
+    vrpn_name = 'vrpn_mocap'
 
     nodes = [
         IncludeLaunchDescription(
@@ -87,7 +87,7 @@ def generate_launch_description():
             output='screen',
             parameters=[config_file],
             remappings=[
-                ('input_pose', [vrpn_name + '/', asset_name, '/pose']),
+                ('input_pose', ['/' + vrpn_name + '/', asset_name, '/pose']),
                 ('output_pose', 'vrpn_output_pose'),
             ],
         ),

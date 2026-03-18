@@ -6,6 +6,7 @@ from geometry_msgs.msg import PoseStamped, Twist, PoseWithCovariance, TwistWithC
 from nav_msgs.msg import Odometry
 import numpy as np
 from tf_transformations import quaternion_matrix
+from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 
 class OdomPublisher(Node):
     def __init__(self):
@@ -28,14 +29,20 @@ class OdomPublisher(Node):
         self.max_accel = 20.0
         self.raw_vel = np.array([0.0,0.0,0.0])
 
-        self.odom_pub = self.create_publisher(Odometry, "car_odom", qos_profile=1)
-        self.pose_pub = self.create_publisher(PoseStamped, "car_pose", qos_profile=1)
+        qos_profile = QoSProfile(
+            depth=1,
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            durability=DurabilityPolicy.VOLATILE
+        )
+
+        self.odom_pub = self.create_publisher(Odometry, "car_odom", qos_profile=qos_profile)
+        self.pose_pub = self.create_publisher(PoseStamped, "car_pose", qos_profile=qos_profile)
         
         self.subscriber = self.create_subscription(
             PoseStamped, 
             "mocap_output_pose", 
             self.pose_callback, 
-            qos_profile=1
+            qos_profile=qos_profile
         )
 
         # rospy.Subscriber("imu/data", Imu, self.imu_callback) ???

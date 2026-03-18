@@ -9,6 +9,7 @@ from geometry_msgs.msg import PoseStamped
 from tf_transformations import euler_from_quaternion, quaternion_from_euler 
 import numpy as np 
 from ament_index_python.packages import get_package_share_directory
+from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 
 class RelayMocapNode(Node): 
     def __init__(self): 
@@ -34,17 +35,24 @@ class RelayMocapNode(Node):
         self.offset_pitch = self.get_parameter('offset_pitch').get_parameter_value().double_value * DEG2RAD 
         self.offset_yaw = self.get_parameter('offset_yaw').get_parameter_value().double_value * DEG2RAD 
             
+
+        qos_profile = QoSProfile(
+            depth=10,
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            durability=DurabilityPolicy.VOLATILE
+        )
+
         self.publisher = self.create_publisher( 
             PoseStamped, 
             'output_pose', 
-            qos_profile=1 
+            qos_profile=qos_profile
         ) 
         
         self.subscriber = self.create_subscription( 
             PoseStamped, 
             'input_pose', 
             self.publish_car_pose, 
-            qos_profile=1 
+            qos_profile=qos_profile 
         ) 
 
         self.get_logger().info( 
