@@ -6,7 +6,7 @@ import rclpy
 from rclpy.node import Node
 from copy import deepcopy 
 from geometry_msgs.msg import PoseStamped 
-from tf_transformations import euler_from_quaternion, quaternion_from_euler 
+from tf_transformations import quaternion_from_euler, quaternion_multiply, quaternion_matrix 
 import numpy as np 
 from ament_index_python.packages import get_package_share_directory
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
@@ -64,19 +64,20 @@ class RelayMocapNode(Node):
     def publish_car_pose(self, msg): 
         orientation = msg.pose.orientation 
         quat = [orientation.x, orientation.y, orientation.z, orientation.w] 
-        roll, pitch, yaw = euler_from_quaternion(quat) 
-        
-        # hacky orientation offset (ideally you should have quaternion offsets, this sort of offset only works if you just want to rotate around 1 axis at a time) 
-        roll += self.offset_roll 
-        pitch += self.offset_pitch 
-        yaw += self.offset_yaw 
-        
-        quat = quaternion_from_euler(roll, pitch, yaw) 
+
+        # Apply orientation offset via quaternion multiplication
+        offset_quat = quaternion_from_euler(self.offset_roll, self.offset_pitch, self.offset_yaw)
+        quat = quaternion_multiply(quat, offset_quat)
+
+        # Rotate the position offset from body frame into world frame
+        R = quaternion_matrix(quat)[:3, :3]
+        body_offset = np.array([self.offset_x, self.offset_y, self.offset_z])
+        world_offset = R @ body_offset
 
         p = deepcopy(msg) 
-        p.pose.position.x = msg.pose.position.x + self.offset_x 
-        p.pose.position.y = msg.pose.position.y + self.offset_y 
-        p.pose.position.z = msg.pose.position.z + self.offset_z 
+        p.pose.position.x = msg.pose.position.x + world_offset[0] 
+        p.pose.position.y = msg.pose.position.y + world_offset[1] 
+        p.pose.position.z = msg.pose.position.z + world_offset[2] 
         
         p.pose.orientation.x = quat[0] 
         p.pose.orientation.y = quat[1] 
