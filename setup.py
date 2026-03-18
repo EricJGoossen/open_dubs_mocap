@@ -42,6 +42,7 @@ setup(
             'fake_mocap = open_dubs_mocap.fake_mocap:main',
             'relay_mocap = open_dubs_mocap.relay_mocap:main',
             'block_pose = open_dubs_mocap.block_pose:main',
+            'odom_broadcaster = open_dubs_mocap.odom_broadcaster:main',
         ],
     },
 )

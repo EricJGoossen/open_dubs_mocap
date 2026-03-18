@@ -90,6 +90,16 @@ def generate_launch_description():
                 ('input_pose', [vrpn_name + '/', asset_name, '/pose']),
                 ('output_pose', 'vrpn_output_pose'),
             ],
+        ),
+        Node(
+            package='open_dubs_mocap',
+            executable='odom_broadcaster',
+            name='odom_broadcaster',
+            namespace=namespace,
+            output='screen',
+            remappings=[
+                ('car_odom', 'vrpn_output_pose'),
+            ],
         )
     ]
 
