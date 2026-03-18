@@ -21,10 +21,10 @@
     # Odometry parameters
     filter_alpha: 0.2
 
-    # TF offsets
-    offset_x: -1.900
-    offset_y: -2.263
-    offset_z: -0.170 
+    # TF offsets in meters and radians (relative to robot frame, x forward, y left, z up)
+    offset_x: 0.0211
+    offset_y: 0.007
+    offset_z: -0.448 
     offset_roll: 0.0 
     offset_pitch: 0.0
     offset_yaw: 0.0

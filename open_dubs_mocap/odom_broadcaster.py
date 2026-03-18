@@ -3,6 +3,7 @@ from rclpy.node import Node
 
 from geometry_msgs.msg import TransformStamped, PoseStamped
 from tf2_ros import TransformBroadcaster
+from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 
 class odomBraodcaster(Node):
     def __init__(self):
@@ -10,11 +11,17 @@ class odomBraodcaster(Node):
 
         self.tf_broadcaster = TransformBroadcaster(self)
 
+        qos_profile = QoSProfile(
+            depth=10,
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            durability=DurabilityPolicy.VOLATILE
+        )
+
         self.subscriber = self.create_subscription(
             PoseStamped,
             'car_odom',
             self.odom_callback,
-            10
+            qos_profile=qos_profile
         )
 
     def odom_callback(self, msg):
