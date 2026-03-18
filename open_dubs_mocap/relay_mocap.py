@@ -6,6 +6,7 @@ import rclpy
 from rclpy.node import Node
 from copy import deepcopy 
 from geometry_msgs.msg import PoseStamped 
+from nav_msgs.msg import Path 
 from tf_transformations import quaternion_from_euler, quaternion_multiply, quaternion_matrix 
 import numpy as np 
 from ament_index_python.packages import get_package_share_directory
@@ -47,6 +48,14 @@ class RelayMocapNode(Node):
             'output_pose', 
             qos_profile=qos_profile
         ) 
+
+        self.path_publisher = self.create_publisher(
+            Path,
+            'path',
+            10
+        )
+        self.path = Path()
+        self.path.header.frame_id = 'odom'
         
         self.subscriber = self.create_subscription( 
             PoseStamped, 
@@ -84,6 +93,11 @@ class RelayMocapNode(Node):
         p.pose.orientation.z = quat[2] 
         p.pose.orientation.w = quat[3] 
         self.publisher.publish(p) 
+
+        # Append to path and publish
+        self.path.header.stamp = p.header.stamp
+        self.path.poses.append(p)
+        self.path_publisher.publish(self.path)
         
 def main(args=None): 
     rclpy.init() 
