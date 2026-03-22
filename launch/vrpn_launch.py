@@ -97,6 +97,7 @@ def generate_launch_description():
             name='odom_broadcaster',
             namespace=namespace,
             output='screen',
+            parameters=[config_file],
             remappings=[
                 ('car_odom', 'vrpn_output_pose'),
             ],

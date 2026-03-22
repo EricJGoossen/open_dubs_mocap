@@ -12,7 +12,6 @@ class OdomPublisher(Node):
     def __init__(self):
         super().__init__("odom_publisher")
 
-        self.last_publish = self.get_clock().now()
         self.last_pose = None
         self.last_time = None
 
@@ -65,13 +64,26 @@ class OdomPublisher(Node):
     #         msg.orientation.w
     #     )
     #     self.imu_ori = euler_from_quaternion(quaternion)
+
+    @staticmethod
+    def stamp_to_sec(stamp):
+        return float(stamp.sec) + float(stamp.nanosec) * 1e-9
     
     def pose_callback(self, msg):
         # If we have a previous pose, calculate velocity
-        current_time = self.get_clock().now()
-        dt = (current_time - self.last_publish).nanoseconds * 1e-9
+        if msg.header.stamp.sec == 0 and msg.header.stamp.nanosec == 0:
+            current_time = self.get_clock().now().nanoseconds * 1e-9
+        else:
+            current_time = self.stamp_to_sec(msg.header.stamp)
 
-        if self.last_pose is None or self.last_time is None or dt <= 0:
+        if self.last_pose is None or self.last_time is None:
+            self.last_pose = msg
+            self.last_time = current_time
+            return
+
+        dt = current_time - self.last_time
+
+        if dt <= 0:
             self.last_pose = msg
             self.last_time = current_time
             return

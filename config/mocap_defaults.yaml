@@ -20,6 +20,8 @@
 
     # Odometry parameters
     filter_alpha: 0.2
+    parent_frame_id: map
+    child_frame_id: mocap_base_link
 
     # TF offsets in meters and radians (relative to robot frame, x forward, y left, z up)
     offset_x: 0.0211
