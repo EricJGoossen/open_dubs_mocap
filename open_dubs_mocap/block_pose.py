@@ -1,4 +1,6 @@
 #!/usr/bin/env python3 
+"""Apply configurable position/orientation offsets to tracked mocap objects."""
+
 import rclpy 
 from rclpy.node import Node
 import yaml 
@@ -10,7 +12,10 @@ from ament_index_python.packages import get_package_share_directory
 import os 
 
 class PoseOffsetNode(Node): 
+    """Publish offset-adjusted poses for a configurable set of tracked objects."""
+
     def __init__(self): 
+        """Initialize parameters and create per-object publishers/subscribers."""
         super().__init__('pose_offset_node') 
 
         DEG2RAD = np.pi / 180.0 
@@ -71,7 +76,12 @@ class PoseOffsetNode(Node):
         ) 
             
     def pose_callback(self, obj_name, msg): 
-        """Process incoming pose message and apply offsets""" 
+        """Apply configured offsets and publish transformed pose.
+
+        Args:
+            obj_name (str): Tracked object name used for publisher lookup.
+            msg (PoseStamped): Incoming raw mocap pose for the object.
+        """ 
         try: 
             # Create new pose message 
             new_pose = PoseStamped() 
@@ -113,6 +123,11 @@ class PoseOffsetNode(Node):
             self.get_logger().error(f"Error processing pose for {obj_name}: {str(e)}") 
             
 def main(args=None): 
+    """Run the pose offset node until shutdown.
+
+    Args:
+        args (list[str] | None): Optional ROS CLI arguments.
+    """
     rclpy.init() 
     node = PoseOffsetNode() 
     

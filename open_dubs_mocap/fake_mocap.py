@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
+"""Publish synthetic mocap poses for development and testing."""
+
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseStamped
 import numpy as np
 
 class FakeMocapPublisher(Node):
+    """Generate simple dynamic and static pose streams without VRPN."""
+
     def __init__(self):
+        """Initialize synthetic mocap publishers and timer."""
         super().__init__('fake_mocap')
 
         # Publishers for car and some blocks/ramps
@@ -18,6 +23,7 @@ class FakeMocapPublisher(Node):
         self.t = 0.0
 
     def timer_callback(self):
+        """Publish one timestep of synthetic object poses."""
         self.t += 0.02
 
         # Car moves in a circle
@@ -44,6 +50,11 @@ class FakeMocapPublisher(Node):
             pub.publish(msg)
 
 def main(args=None):
+    """Run fake mocap publisher until shutdown.
+
+    Args:
+        args (list[str] | None): Optional ROS CLI arguments.
+    """
     rclpy.init(args=args)
     node = FakeMocapPublisher()
     try:

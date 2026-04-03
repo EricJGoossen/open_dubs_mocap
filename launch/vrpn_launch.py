@@ -1,3 +1,5 @@
+"""Launch VRPN mocap client (or fake mocap) and relay nodes."""
+
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.conditions import IfCondition, UnlessCondition
@@ -7,6 +9,11 @@ from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
 def generate_launch_description():
+    """Launch mocap ingestion, relay, and TF broadcaster nodes.
+
+    Returns:
+        LaunchDescription: Launch definition for mocap pipeline.
+    """
     default_config_file = PathJoinSubstitution([
         FindPackageShare("open_dubs_mocap"), "config", "mocap_defaults.yaml"
     ])

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3 
+"""Relay mocap pose streams while applying configurable pose offsets."""
+
 # This publishes "absolute" pose of the car with respect to the "ground" reference set during calibration. 
 # Since mocap publishes y-up we swap the axis to be z-up and x to be the horizontal axis of the room. 
 
@@ -13,7 +15,10 @@ from ament_index_python.packages import get_package_share_directory
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 
 class RelayMocapNode(Node): 
+    """Republish mocap pose with translational/orientational offsets and path."""
+
     def __init__(self): 
+        """Initialize offset parameters, I/O topics, and path publisher."""
         super().__init__("pose_publisher") 
 
         DEG2RAD = np.pi / 180.0 
@@ -71,6 +76,11 @@ class RelayMocapNode(Node):
         ) 
             
     def publish_car_pose(self, msg): 
+        """Apply configured offsets to incoming pose and publish results.
+
+        Args:
+            msg (PoseStamped): Raw incoming mocap pose.
+        """
         orientation = msg.pose.orientation 
         quat = [orientation.x, orientation.y, orientation.z, orientation.w] 
 
@@ -100,6 +110,11 @@ class RelayMocapNode(Node):
         self.path_publisher.publish(self.path)
         
 def main(args=None): 
+    """Run relay mocap node until shutdown.
+
+    Args:
+        args (list[str] | None): Optional ROS CLI arguments.
+    """
     rclpy.init() 
     node = RelayMocapNode() 
     

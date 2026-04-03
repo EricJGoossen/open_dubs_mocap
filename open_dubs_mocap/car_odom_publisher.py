@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Publish odometry and pose topics from incoming mocap pose measurements."""
 
 import rclpy
 from rclpy.node import Node
@@ -9,7 +10,10 @@ from tf_transformations import quaternion_matrix
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 
 class OdomPublisher(Node):
+    """Convert mocap pose updates into filtered body-frame velocity and odometry."""
+
     def __init__(self):
+        """Initialize publishers, subscriber, filter parameters, and timer."""
         super().__init__("odom_publisher")
 
         self.last_publish = self.get_clock().now()
@@ -51,6 +55,8 @@ class OdomPublisher(Node):
         self.timer = self.create_timer(pub_period, self.main_loop_callback)
 
     def main_loop_callback(self):
+        """Publish buffered odom/pose outputs when new data is ready."""
+        # TODO: why is this logic necessary? Shouldn't we just publish in the pose callback?
         if self.update_odom:
             self.odom_pub.publish(self.odom_msg)
             self.pose_pub.publish(self.pose_msg)
@@ -67,6 +73,11 @@ class OdomPublisher(Node):
     #     self.imu_ori = euler_from_quaternion(quaternion)
     
     def pose_callback(self, msg):
+        """Update odometry state from a new mocap pose sample.
+
+        Args:
+            msg (PoseStamped): Input mocap pose message.
+        """
         # If we have a previous pose, calculate velocity
         current_time = self.get_clock().now()
         dt = (current_time - self.last_publish).nanoseconds * 1e-9
@@ -148,6 +159,11 @@ class OdomPublisher(Node):
 
 
 def main(args=None):
+    """Run the odometry publisher node until shutdown.
+
+    Args:
+        args (list[str] | None): Optional ROS CLI arguments.
+    """
     rclpy.init()
     node = OdomPublisher()
 
