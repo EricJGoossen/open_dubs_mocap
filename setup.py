@@ -12,7 +12,6 @@ setup(
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name + '/launch', [
             'launch/car_odom_publisher_launch.py',
-            'launch/car_pose_publisher_launch.py',
             'launch/object_publisher_launch.py',
             'launch/vrpn_launch.py',
         ]),
@@ -37,7 +36,6 @@ setup(
     },
     entry_points={
          'console_scripts': [
-            'car_pose_publisher = open_dubs_mocap.car_pose_publisher:main',
             'car_odom_publisher = open_dubs_mocap.car_odom_publisher:main',
             'fake_mocap = open_dubs_mocap.fake_mocap:main',
             'relay_mocap = open_dubs_mocap.relay_mocap:main',
