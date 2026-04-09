@@ -55,7 +55,7 @@ class RelayMocapNode(Node):
             10
         )
         self.path = Path()
-        self.path.header.frame_id = 'odom'
+        self.path.header.frame_id = 'map'
         
         self.subscriber = self.create_subscription( 
             PoseStamped, 
