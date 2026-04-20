@@ -25,7 +25,7 @@ class odomBraodcaster(Node):
 
         self.subscriber = self.create_subscription(
             PoseStamped,
-            'car_odom',
+            "odom_input",
             self.odom_callback,
             qos_profile=qos_profile
         )

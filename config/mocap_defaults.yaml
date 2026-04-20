@@ -20,7 +20,7 @@
 
     # Odometry parameters
     filter_alpha: 0.2
-    parent_frame_id: map
+    parent_frame_id: odom
     child_frame_id: base_link
 
     # TF offsets in meters and radians (relative to robot frame, x forward, y left, z up)
