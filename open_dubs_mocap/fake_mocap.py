@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-import rclpy
-from rclpy.node import Node
 from geometry_msgs.msg import PoseStamped
 import numpy as np
+import rclpy
+from rclpy.node import Node
+
 
 class FakeMocapPublisher(Node):
+
     def __init__(self):
         super().__init__('fake_mocap')
 
@@ -30,7 +32,7 @@ class FakeMocapPublisher(Node):
         car_msg.pose.orientation.w = 1.0
         self.pub_car.publish(car_msg)
 
-        # Static ramps and blocks 
+        # Static ramps and blocks
         for pub, pos in [(self.pub_ramp1, (1.0, 0.0, 0.0)),
                          (self.pub_ramp2, (-1.0, 0.0, 0.0)),
                          (self.pub_block1, (0.5, 0.5, 0.0))]:
@@ -43,6 +45,7 @@ class FakeMocapPublisher(Node):
             msg.pose.orientation.w = 1.0
             pub.publish(msg)
 
+
 def main(args=None):
     rclpy.init(args=args)
     node = FakeMocapPublisher()
@@ -54,5 +57,5 @@ def main(args=None):
         node.destroy_node()
         try:
             rclpy.shutdown()
-        except:
+        except Exception:
             pass

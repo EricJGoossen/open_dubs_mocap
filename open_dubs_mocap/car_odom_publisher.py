@@ -1,16 +1,23 @@
 #!/usr/bin/env python3
 
-import rclpy
-from rclpy.node import Node
-from geometry_msgs.msg import PoseStamped, Twist, PoseWithCovariance, TwistWithCovariance
+from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseWithCovariance
+from geometry_msgs.msg import Twist
+from geometry_msgs.msg import TwistWithCovariance
 from nav_msgs.msg import Odometry
 import numpy as np
+import rclpy
+from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy
+from rclpy.qos import QoSProfile
+from rclpy.qos import ReliabilityPolicy
 from tf_transformations import quaternion_matrix
-from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
+
 
 class OdomPublisher(Node):
+
     def __init__(self):
-        super().__init__("odom_publisher")
+        super().__init__('odom_publisher')
 
         self.last_pose = None
         self.last_time = None
@@ -21,12 +28,12 @@ class OdomPublisher(Node):
 
         self.filtered_velocity = np.array([0.0, 0.0, 0.0])  # Initial filtered velocity
 
-        self.imu_ori = [0.0,0.0,0.0]
+        self.imu_ori = [0.0, 0.0, 0.0]
         self.odom_msg = Odometry()
         self.pose_msg = PoseStamped()
         self.update_odom = False
         self.max_accel = 20.0
-        self.raw_vel = np.array([0.0,0.0,0.0])
+        self.raw_vel = np.array([0.0, 0.0, 0.0])
 
         qos_profile = QoSProfile(
             depth=1,
@@ -34,17 +41,17 @@ class OdomPublisher(Node):
             durability=DurabilityPolicy.VOLATILE
         )
 
-        self.odom_pub = self.create_publisher(Odometry, "car_odom", qos_profile=qos_profile)
-        self.pose_pub = self.create_publisher(PoseStamped, "car_pose", qos_profile=qos_profile)
-        
+        self.odom_pub = self.create_publisher(Odometry, 'car_odom', qos_profile=qos_profile)
+        self.pose_pub = self.create_publisher(PoseStamped, 'car_pose', qos_profile=qos_profile)
+
         self.subscriber = self.create_subscription(
-            PoseStamped, 
-            "mocap_output_pose", 
-            self.pose_callback, 
+            PoseStamped,
+            'mocap_output_pose',
+            self.pose_callback,
             qos_profile=qos_profile
         )
 
-        # rospy.Subscriber("imu/data", Imu, self.imu_callback) ???
+        # rospy.Subscriber('imu/data', Imu, self.imu_callback) ???
 
         pub_period = 1 / 100.0
         self.timer = self.create_timer(pub_period, self.main_loop_callback)
@@ -68,7 +75,7 @@ class OdomPublisher(Node):
     @staticmethod
     def stamp_to_sec(stamp):
         return float(stamp.sec) + float(stamp.nanosec) * 1e-9
-    
+
     def pose_callback(self, msg):
         # If we have a previous pose, calculate velocity
         if msg.header.stamp.sec == 0 and msg.header.stamp.nanosec == 0:
@@ -104,7 +111,7 @@ class OdomPublisher(Node):
             orientation.w
         )
 
-        #use imu for roll and pitch ???
+        # use imu for roll and pitch ???
         # rpy = euler_from_quaternion(quat)
         # ori = [0,0,0]
         # ori[0] = self.imu_ori[0]
@@ -122,7 +129,7 @@ class OdomPublisher(Node):
 
         vfilter = np.abs(self.raw_vel-velocity_body) / dt < self.max_accel
         self.raw_vel = velocity_body
-        
+
         velocity_body = velocity_body*vfilter + self.filtered_velocity * (vfilter == 0)
 
         # Apply low-pass filter
@@ -139,10 +146,10 @@ class OdomPublisher(Node):
 
         # Update the timestamp for each message
         self.odom_msg.header.stamp = timestamp
-        self.odom_msg.header.frame_id = "map"  # or any relevant frame_id
-        self.odom_msg.child_frame_id = "base_link"
+        self.odom_msg.header.frame_id = 'map'  # or any relevant frame_id
+        self.odom_msg.child_frame_id = 'base_link'
         self.pose_msg.header.stamp = timestamp
-        self.pose_msg.header.frame_id = "map"  # or any relevant frame_id
+        self.pose_msg.header.frame_id = 'map'  # or any relevant frame_id
         self.pose_msg.pose = msg.pose
 
         twist_covar_msg = TwistWithCovariance()
@@ -163,13 +170,13 @@ def main(args=None):
     rclpy.init()
     node = OdomPublisher()
 
-    try: 
-        rclpy.spin(node) 
-    except KeyboardInterrupt: 
-        pass 
-    finally: 
-        node.destroy_node() 
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
         try:
             rclpy.shutdown()
-        except:
+        except Exception:
             pass

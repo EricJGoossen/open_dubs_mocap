@@ -1,4 +1,5 @@
-from setuptools import find_packages, setup
+from setuptools import find_packages
+from setuptools import setup
 
 package_name = 'open_dubs_mocap'
 
@@ -36,7 +37,7 @@ setup(
         ],
     },
     entry_points={
-         'console_scripts': [
+        'console_scripts': [
             'car_pose_publisher = open_dubs_mocap.car_pose_publisher:main',
             'car_odom_publisher = open_dubs_mocap.car_odom_publisher:main',
             'fake_mocap = open_dubs_mocap.fake_mocap:main',

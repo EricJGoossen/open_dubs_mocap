@@ -1,24 +1,32 @@
-#!/usr/bin/env python3 
-# This publishes "absolute" pose of the car with respect to the "ground" reference set during calibration. 
-# Since mocap publishes y-up we swap the axis to be z-up and x to be the horizontal axis of the room. 
+#!/usr/bin/env python3
+# This publishes 'absolute' pose of the car with respect
+# to the 'ground' reference set during calibration.
+# Since mocap publishes y-up, we swap the axis to be z-up
+# and x to be the horizontal axis of the room.
 
-import rclpy 
+from copy import deepcopy
+
+from geometry_msgs.msg import PoseStamped
+from nav_msgs.msg import Path
+import numpy as np
+import rclpy
 from rclpy.node import Node
-from copy import deepcopy 
-from geometry_msgs.msg import PoseStamped 
-from nav_msgs.msg import Path 
-from tf_transformations import quaternion_from_euler, quaternion_multiply, quaternion_matrix 
-import numpy as np 
-from ament_index_python.packages import get_package_share_directory
-from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
+from rclpy.qos import DurabilityPolicy
+from rclpy.qos import QoSProfile
+from rclpy.qos import ReliabilityPolicy
+from tf_transformations import quaternion_from_euler
+from tf_transformations import quaternion_matrix
+from tf_transformations import quaternion_multiply
 
-class RelayMocapNode(Node): 
-    def __init__(self): 
-        super().__init__("pose_publisher") 
 
-        DEG2RAD = np.pi / 180.0 
-        
-        # Declare parameters        
+class RelayMocapNode(Node):
+
+    def __init__(self):
+        super().__init__('pose_publisher')
+
+        DEG2RAD = np.pi / 180.0
+
+        # Declare parameters
         self.declare_parameter('offset_x', 0.0)
         self.declare_parameter('offset_y', 0.0)
         self.declare_parameter('offset_z', 0.0)
@@ -28,14 +36,16 @@ class RelayMocapNode(Node):
         self.declare_parameter('offset_yaw', 0.0)
 
         # Get parameters
-        self.offset_x = self.get_parameter('offset_x').get_parameter_value().double_value 
-        self.offset_y = self.get_parameter('offset_y').get_parameter_value().double_value 
-        self.offset_z = self.get_parameter('offset_z').get_parameter_value().double_value 
+        self.offset_x = self.get_parameter('offset_x').get_parameter_value().double_value
+        self.offset_y = self.get_parameter('offset_y').get_parameter_value().double_value
+        self.offset_z = self.get_parameter('offset_z').get_parameter_value().double_value
 
-        self.offset_roll = self.get_parameter('offset_roll').get_parameter_value().double_value * DEG2RAD 
-        self.offset_pitch = self.get_parameter('offset_pitch').get_parameter_value().double_value * DEG2RAD 
-        self.offset_yaw = self.get_parameter('offset_yaw').get_parameter_value().double_value * DEG2RAD 
-            
+        self.offset_roll = self.get_parameter(
+            'offset_roll').get_parameter_value().double_value * DEG2RAD
+        self.offset_pitch = self.get_parameter(
+            'offset_pitch').get_parameter_value().double_value * DEG2RAD
+        self.offset_yaw = self.get_parameter(
+            'offset_yaw').get_parameter_value().double_value * DEG2RAD
 
         qos_profile = QoSProfile(
             depth=10,
@@ -43,11 +53,11 @@ class RelayMocapNode(Node):
             durability=DurabilityPolicy.VOLATILE
         )
 
-        self.publisher = self.create_publisher( 
-            PoseStamped, 
-            'output_pose', 
+        self.publisher = self.create_publisher(
+            PoseStamped,
+            'output_pose',
             qos_profile=qos_profile
-        ) 
+        )
 
         self.path_publisher = self.create_publisher(
             Path,
@@ -56,23 +66,23 @@ class RelayMocapNode(Node):
         )
         self.path = Path()
         self.path.header.frame_id = 'map'
-        
-        self.subscriber = self.create_subscription( 
-            PoseStamped, 
-            'input_pose', 
-            self.publish_car_pose, 
-            qos_profile=qos_profile 
-        ) 
 
-        self.get_logger().info( 
-            f"Pose relay node started\n" 
-            f"Position offsets: [{self.offset_x}, {self.offset_y}, {self.offset_z}]\n" 
-            f"Orientation offsets: [{self.offset_roll}, {self.offset_pitch}, {self.offset_yaw}]" 
-        ) 
-            
-    def publish_car_pose(self, msg): 
-        orientation = msg.pose.orientation 
-        quat = [orientation.x, orientation.y, orientation.z, orientation.w] 
+        self.subscriber = self.create_subscription(
+            PoseStamped,
+            'input_pose',
+            self.publish_car_pose,
+            qos_profile=qos_profile
+        )
+
+        self.get_logger().info(
+            f'Pose relay node started\n'
+            f'Position offsets: [{self.offset_x}, {self.offset_y}, {self.offset_z}]\n'
+            f'Orientation offsets: [{self.offset_roll}, {self.offset_pitch}, {self.offset_yaw}]'
+        )
+
+    def publish_car_pose(self, msg):
+        orientation = msg.pose.orientation
+        quat = [orientation.x, orientation.y, orientation.z, orientation.w]
 
         # Apply orientation offset via quaternion multiplication
         offset_quat = quaternion_from_euler(self.offset_roll, self.offset_pitch, self.offset_yaw)
@@ -83,33 +93,34 @@ class RelayMocapNode(Node):
         body_offset = np.array([self.offset_x, self.offset_y, self.offset_z])
         world_offset = R @ body_offset
 
-        p = deepcopy(msg) 
-        p.pose.position.x = msg.pose.position.x + world_offset[0] 
-        p.pose.position.y = msg.pose.position.y + world_offset[1] 
-        p.pose.position.z = msg.pose.position.z + world_offset[2] 
-        
-        p.pose.orientation.x = quat[0] 
-        p.pose.orientation.y = quat[1] 
-        p.pose.orientation.z = quat[2] 
-        p.pose.orientation.w = quat[3] 
-        self.publisher.publish(p) 
+        p = deepcopy(msg)
+        p.pose.position.x = msg.pose.position.x + world_offset[0]
+        p.pose.position.y = msg.pose.position.y + world_offset[1]
+        p.pose.position.z = msg.pose.position.z + world_offset[2]
+
+        p.pose.orientation.x = quat[0]
+        p.pose.orientation.y = quat[1]
+        p.pose.orientation.z = quat[2]
+        p.pose.orientation.w = quat[3]
+        self.publisher.publish(p)
 
         # Append to path and publish
         self.path.header.stamp = p.header.stamp
         self.path.poses.append(p)
         self.path_publisher.publish(self.path)
-        
-def main(args=None): 
-    rclpy.init() 
-    node = RelayMocapNode() 
-    
-    try: 
-        rclpy.spin(node) 
-    except KeyboardInterrupt: 
-        pass 
-    finally: 
-        node.destroy_node() 
+
+
+def main(args=None):
+    rclpy.init()
+    node = RelayMocapNode()
+
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
         try:
             rclpy.shutdown()
-        except:
+        except Exception:
             pass

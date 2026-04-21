@@ -1,19 +1,24 @@
+from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import TransformStamped
 import rclpy
 from rclpy.node import Node
-
-from geometry_msgs.msg import TransformStamped, PoseStamped
+from rclpy.qos import DurabilityPolicy
+from rclpy.qos import QoSProfile
+from rclpy.qos import ReliabilityPolicy
 from tf2_ros import TransformBroadcaster
-from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 
 
 class odomBraodcaster(Node):
+
     def __init__(self):
         super().__init__('odom_broadcaster')
 
         self.declare_parameter('parent_frame_id', 'map')
         self.declare_parameter('child_frame_id', 'mocap_base_link')
-        self.parent_frame_id = self.get_parameter('parent_frame_id').get_parameter_value().string_value
-        self.child_frame_id = self.get_parameter('child_frame_id').get_parameter_value().string_value
+        self.parent_frame_id = self.get_parameter(
+            'parent_frame_id').get_parameter_value().string_value
+        self.child_frame_id = self.get_parameter(
+            'child_frame_id').get_parameter_value().string_value
 
         self.tf_broadcaster = TransformBroadcaster(self)
 
@@ -25,7 +30,7 @@ class odomBraodcaster(Node):
 
         self.subscriber = self.create_subscription(
             PoseStamped,
-            "odom_input",
+            'odom_input',
             self.odom_callback,
             qos_profile=qos_profile
         )
@@ -44,6 +49,7 @@ class odomBraodcaster(Node):
         t.transform.rotation = msg.pose.orientation
 
         self.tf_broadcaster.sendTransform(t)
+
 
 def main(args=None):
     rclpy.init(args=args)

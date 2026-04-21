@@ -1,22 +1,26 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
-from launch.conditions import IfCondition, UnlessCondition
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.actions import DeclareLaunchArgument
+from launch.actions import IncludeLaunchDescription
+from launch.conditions import IfCondition
+from launch.conditions import UnlessCondition
 from launch.launch_description_sources import AnyLaunchDescriptionSource
+from launch.substitutions import LaunchConfiguration
+from launch.substitutions import PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
+
 def generate_launch_description():
     default_config_file = PathJoinSubstitution([
-        FindPackageShare("open_dubs_mocap"), "config", "mocap_defaults.yaml"
+        FindPackageShare('open_dubs_mocap'), 'config', 'mocap_defaults.yaml'
     ])
 
     # Declare launch arguments
     launch_arguments = [
         DeclareLaunchArgument(
-            "config_file",
+            'config_file',
             default_value=default_config_file,
-            description="Path to YAML config file for mocap nodes"
+            description='Path to YAML config file for mocap nodes'
         ),
         DeclareLaunchArgument(
             'server',
@@ -59,7 +63,7 @@ def generate_launch_description():
                     FindPackageShare('vrpn_mocap'), 'launch', 'client.launch.yaml'
                 ])
             ]),
-            condition=UnlessCondition(LaunchConfiguration("use_fake_mocap")),
+            condition=UnlessCondition(LaunchConfiguration('use_fake_mocap')),
             launch_arguments={
                 'server': server,
                 'port': port,
@@ -90,6 +94,6 @@ def generate_launch_description():
                 ('input_pose', ['/' + vrpn_name + '/', asset_name, '/pose']),
                 ('output_pose', 'vrpn_output_pose'),
             ],
-        )   ]
+        )]
 
     return LaunchDescription(launch_arguments + nodes)
