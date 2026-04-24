@@ -45,7 +45,7 @@ def generate_launch_description():
                 'asset_name': LaunchConfiguration('asset_name'),
                 'config_file': LaunchConfiguration('config_file')
             }.items()
-        ),
+        )
     ]
 
     nodes = [
